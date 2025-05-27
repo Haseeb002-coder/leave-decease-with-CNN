@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Leaf Disease Classifier</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #dff5e1, #a1e3c7);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px;
+    }
+    .container {
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+      max-width: 1200px;
+      background-color: #fff;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+    }
+    .left, .right {
+      flex: 1;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .right { background-color: #f0fff6; }
+    h1 {
+      color: #1b5e20;
+      font-size: 2.2em;
+      margin-bottom: 20px;
+    }
+    p { margin-bottom: 20px; color: #555; }
+    form {
+      width: 100%;
+      max-width: 400px;
+    }
+    input[type="file"] {
+      width: 100%;
+      margin-bottom: 20px;
+      padding: 10px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 12px 25px;
+      font-size: 1em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      width: 100%;
+    }
+    button:hover { background-color: #388e3c; }
+    img {
+      width: 430px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      display: none;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 1.1em;
+      background-color: #ffffffcc;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="left">
+      <h1>🌿 Leaf Disease Classifier</h1>
+      <p>Upload an image to detect disease</p>
+      <form id="uploadForm">
+        <input type="file" id="fileInput" accept="image/*" required />
+        <button type="submit">🔍 Predict</button>
+      </form>
+      <div id="output" class="result"></div>
+    </div>
+    <div class="right">
+      <img id="preview" src="" alt="Image preview" />
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("uploadForm");
+    const fileInput = document.getElementById("fileInput");
+    const output = document.getElementById("output");
+    const preview = document.getElementById("preview");
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files[0];
+      if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = "block";
+      }
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const file = fileInput.files[0];
+      if (!file) return alert("Please select an image!");
+
+      const formData = new FormData();
+      formData.append("file", file);
+      output.innerText = "🔄 Predicting...";
+
+      try {
+        const response = await fetch("/predict/", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          output.innerHTML = `
+            ✅ <strong>Prediction:</strong> ${data.predicted_label}<br>
+            📊 <strong>Confidence:</strong> ${(data.confidence * 100).toFixed(2)}%
+          `;
+        } else {
+          output.innerText = "❌ Error: " + data.detail;
+        }
+      } catch (error) {
+        output.innerText = "❌ Request failed!";
+      }
+    });
+  </script>
+
+</body>
+</html>
